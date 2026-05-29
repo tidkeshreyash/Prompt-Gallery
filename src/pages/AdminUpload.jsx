@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase/client'
+import { useOptions } from '../hooks/useOptions'
+import DynamicSelect from '../components/DynamicSelect'
 
 const AI_TOOLS = ['Midjourney', 'Chat GPT', 'Stable Diffusion', 'Flux', 'Firefly', 'Other']
 
@@ -10,6 +12,7 @@ const CATEGORIES = [
 ]
 
 export default function AdminUpload() {
+    const { aiTools, categories } = useOptions()
     const [form, setForm] = useState({
         prompt: '',
         ai_tool: '',
@@ -155,38 +158,21 @@ export default function AdminUpload() {
                     </div>
 
                     {/* AI Tool */}
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-2">AI Tool</label>
-                        <select
-                            name="ai_tool"
-                            value={form.ai_tool}
-                            onChange={handleChange}
-                            className="w-full bg-gray-800 rounded-lg px-4 py-3 text-sm
-                text-white outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option value="">Select AI Tool</option>
-                            {AI_TOOLS.map(tool => (
-                                <option key={tool} value={tool}>{tool}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DynamicSelect
+                        label="AI Tool"
+                        value={form.ai_tool}
+                        onChange={(val) => setForm({ ...form, ai_tool: val })}
+                        options={aiTools}
+                        placeholder="Select AI Tool"
+                    />
 
-                    {/* Category */}
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-2">Category</label>
-                        <select
-                            name="category"
-                            value={form.category}
-                            onChange={handleChange}
-                            className="w-full bg-gray-800 rounded-lg px-4 py-3 text-sm
-                text-white outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option value="">Select Category</option>
-                            {CATEGORIES.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <DynamicSelect
+                        label="Category"
+                        value={form.category}
+                        onChange={(val) => setForm({ ...form, category: val })}
+                        options={categories}
+                        placeholder="Select Category"
+                    />
 
                     {/* Messages */}
                     {errorMsg && (

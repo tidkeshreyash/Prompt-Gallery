@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase/client'
 
-const AI_TOOLS = ['All', 'Midjourney', 'DALL-E 3', 'Stable Diffusion', 'Flux', 'Firefly', 'Other']
-
-const CATEGORIES = [
-    'All', 'Portrait', 'Landscape', 'Architecture', 'Fantasy',
-    'Sci-Fi', 'Animals', 'Food', 'Abstract', 'Style / Aesthetic', 'Other'
-]
-
 const SORTS = ['Trending', 'New', 'Top']
 
 function ImageCard({ image, onCopy }) {
@@ -28,7 +21,6 @@ function ImageCard({ image, onCopy }) {
             className="group relative bg-[#0f0f0f] rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/60"
             onClick={() => setExpanded(!expanded)}
         >
-            {/* Image */}
             <div className="relative overflow-hidden">
                 {!imgLoaded && (
                     <div className="w-full h-56 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] animate-pulse" />
@@ -41,10 +33,8 @@ function ImageCard({ image, onCopy }) {
                     style={{ maxHeight: '280px' }}
                 />
 
-                {/* Overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Badges */}
                 <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
                     <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-sm text-white/90 border border-white/10 uppercase tracking-wider">
                         {image.ai_tool}
@@ -56,7 +46,6 @@ function ImageCard({ image, onCopy }) {
                     )}
                 </div>
 
-                {/* Copy count */}
                 {image.copy_count > 0 && (
                     <div className="absolute top-3 right-3 text-[10px] font-medium px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-sm text-white/60 border border-white/10">
                         {image.copy_count} copies
@@ -64,16 +53,13 @@ function ImageCard({ image, onCopy }) {
                 )}
             </div>
 
-            {/* Bottom section */}
             <div className="p-4">
-                {/* Category tag */}
                 <div className="mb-3">
                     <span className="text-[11px] text-indigo-400 font-medium uppercase tracking-widest">
                         {image.category}
                     </span>
                 </div>
 
-                {/* Prompt preview */}
                 <p className={`text-sm text-white/60 leading-relaxed transition-all duration-300 ${expanded ? '' : 'line-clamp-2'}`}>
                     {image.prompt}
                 </p>
@@ -87,11 +73,10 @@ function ImageCard({ image, onCopy }) {
                     </button>
                 )}
 
-                {/* Copy button */}
                 <button
                     onClick={handleCopy}
                     className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2
-            ${copied
+                        ${copied
                             ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                             : 'bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-500/30 hover:border-transparent'
                         }`}
@@ -120,6 +105,8 @@ function ImageCard({ image, onCopy }) {
 
 export default function Gallery() {
     const [images, setImages] = useState([])
+    const [aiTools, setAiTools] = useState([])
+    const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedTool, setSelectedTool] = useState('All')
     const [selectedCategory, setSelectedCategory] = useState('All')
@@ -128,9 +115,25 @@ export default function Gallery() {
     const [searchInput, setSearchInput] = useState('')
     const searchTimeout = useRef(null)
 
+    // fetch filter options once on mount
+    useEffect(() => {
+        fetchFilterOptions()
+    }, [])
+
+    // fetch images whenever filters change
     useEffect(() => {
         fetchImages()
     }, [selectedTool, selectedCategory, sortBy, search])
+
+    const fetchFilterOptions = async () => {
+        const { data } = await supabase.from('images').select('ai_tool, category')
+        if (data) {
+            const tools = [...new Set(data.map(d => d.ai_tool).filter(Boolean))].sort()
+            const cats = [...new Set(data.map(d => d.category).filter(Boolean))].sort()
+            setAiTools(tools)
+            setCategories(cats)
+        }
+    }
 
     const fetchImages = async () => {
         setLoading(true)
@@ -165,7 +168,6 @@ export default function Gallery() {
     return (
         <div className="min-h-screen bg-[#080808] text-white">
 
-            {/* Header */}
             <div className="sticky top-0 z-50 bg-[#080808]/90 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
 
@@ -178,7 +180,6 @@ export default function Gallery() {
                             <p className="text-xs text-white/30 mt-0.5 hidden sm:block">Browse & copy AI image prompts</p>
                         </div>
 
-                        {/* Search */}
                         <div className="relative flex-1 max-w-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -188,7 +189,7 @@ export default function Gallery() {
                                 placeholder="Search prompts..."
                                 value={searchInput}
                                 onChange={e => handleSearchInput(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-indigo-500/50 focus:bg-white/8 transition-all"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-indigo-500/50 transition-all"
                             />
                         </div>
                     </div>
@@ -203,26 +204,35 @@ export default function Gallery() {
                                     key={s}
                                     onClick={() => setSortBy(s)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
-                    ${sortBy === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-white/40 hover:text-white/70'}`}
+                                        ${sortBy === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-white/40 hover:text-white/70'}`}
                                 >
                                     {s === 'Trending' ? '🔥 ' : s === 'New' ? '✨ ' : '⭐ '}{s}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Divider */}
                         <div className="w-px h-6 bg-white/10 hidden sm:block" />
 
-                        {/* AI Tool filter */}
+                        {/* AI Tool filter — dynamic */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs text-white/30 font-medium hidden sm:block">Tool:</span>
                             <div className="flex gap-1.5 flex-wrap">
-                                {AI_TOOLS.map(tool => (
+                                <button
+                                    onClick={() => setSelectedTool('All')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border
+                                        ${selectedTool === 'All'
+                                            ? 'bg-indigo-600/30 border-indigo-500/50 text-indigo-300'
+                                            : 'bg-white/3 border-white/8 text-white/40 hover:text-white/70 hover:border-white/20'
+                                        }`}
+                                >
+                                    All
+                                </button>
+                                {aiTools.map(tool => (
                                     <button
                                         key={tool}
                                         onClick={() => setSelectedTool(tool)}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border
-                      ${selectedTool === tool
+                                            ${selectedTool === tool
                                                 ? 'bg-indigo-600/30 border-indigo-500/50 text-indigo-300'
                                                 : 'bg-white/3 border-white/8 text-white/40 hover:text-white/70 hover:border-white/20'
                                             }`}
@@ -233,19 +243,28 @@ export default function Gallery() {
                             </div>
                         </div>
 
-                        {/* Divider */}
                         <div className="w-full sm:w-px sm:h-6 bg-white/10" />
 
-                        {/* Category filter */}
+                        {/* Category filter — dynamic */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-xs text-white/30 font-medium hidden sm:block">Category:</span>
                             <div className="flex gap-1.5 flex-wrap">
-                                {CATEGORIES.map(cat => (
+                                <button
+                                    onClick={() => setSelectedCategory('All')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border
+                                        ${selectedCategory === 'All'
+                                            ? 'bg-purple-600/30 border-purple-500/50 text-purple-300'
+                                            : 'bg-white/3 border-white/8 text-white/40 hover:text-white/70 hover:border-white/20'
+                                        }`}
+                                >
+                                    All
+                                </button>
+                                {categories.map(cat => (
                                     <button
                                         key={cat}
                                         onClick={() => setSelectedCategory(cat)}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border
-                      ${selectedCategory === cat
+                                            ${selectedCategory === cat
                                                 ? 'bg-purple-600/30 border-purple-500/50 text-purple-300'
                                                 : 'bg-white/3 border-white/8 text-white/40 hover:text-white/70 hover:border-white/20'
                                             }`}
@@ -256,7 +275,6 @@ export default function Gallery() {
                             </div>
                         </div>
 
-                        {/* Clear filters */}
                         {activeFilters > 0 && (
                             <button
                                 onClick={() => { setSelectedTool('All'); setSelectedCategory('All') }}
@@ -272,14 +290,12 @@ export default function Gallery() {
             {/* Main content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-                {/* Results count */}
                 {!loading && (
                     <p className="text-xs text-white/25 mb-6 font-medium">
                         {images.length} {images.length === 1 ? 'prompt' : 'prompts'} found
                     </p>
                 )}
 
-                {/* Loading skeleton */}
                 {loading && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {[...Array(8)].map((_, i) => (
@@ -296,7 +312,6 @@ export default function Gallery() {
                     </div>
                 )}
 
-                {/* Empty state */}
                 {!loading && images.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-32 text-center">
                         <div className="text-5xl mb-4">🎨</div>
@@ -305,7 +320,6 @@ export default function Gallery() {
                     </div>
                 )}
 
-                {/* Image grid */}
                 {!loading && images.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {images.map(image => (

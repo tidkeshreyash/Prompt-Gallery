@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase/client'
 import { useNavigate } from 'react-router-dom'
-
-const AI_TOOLS = ['Midjourney', 'DALL-E 3', 'Stable Diffusion', 'Flux', 'Firefly', 'Other']
-const CATEGORIES = [
-    'Portrait', 'Landscape', 'Architecture', 'Fantasy',
-    'Sci-Fi', 'Animals', 'Food', 'Abstract', 'Style / Aesthetic', 'Other'
-]
+import { useOptions } from '../hooks/useOptions'
+import DynamicSelect from '../components/DynamicSelect'
 
 function EditModal({ image, onClose, onSave }) {
+    const { aiTools, categories } = useOptions()
     const [form, setForm] = useState({
         prompt: image.prompt,
         ai_tool: image.ai_tool,
@@ -57,7 +54,6 @@ function EditModal({ image, onClose, onSave }) {
                     </button>
                 </div>
 
-                {/* Image preview */}
                 <img
                     src={image.image_url}
                     alt="preview"
@@ -65,7 +61,6 @@ function EditModal({ image, onClose, onSave }) {
                 />
 
                 <div className="flex flex-col gap-4">
-                    {/* Prompt */}
                     <div>
                         <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider">Prompt</label>
                         <textarea
@@ -77,33 +72,22 @@ function EditModal({ image, onClose, onSave }) {
                         />
                     </div>
 
-                    {/* AI Tool */}
-                    <div>
-                        <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider">AI Tool</label>
-                        <select
-                            name="ai_tool"
-                            value={form.ai_tool}
-                            onChange={handleChange}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all"
-                        >
-                            {AI_TOOLS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
-                        </select>
-                    </div>
+                    <DynamicSelect
+                        label="AI Tool"
+                        value={form.ai_tool}
+                        onChange={(val) => setForm({ ...form, ai_tool: val })}
+                        options={aiTools}
+                        placeholder="Select AI Tool"
+                    />
 
-                    {/* Category */}
-                    <div>
-                        <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider">Category</label>
-                        <select
-                            name="category"
-                            value={form.category}
-                            onChange={handleChange}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/50 transition-all"
-                        >
-                            {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#111]">{c}</option>)}
-                        </select>
-                    </div>
+                    <DynamicSelect
+                        label="Category"
+                        value={form.category}
+                        onChange={(val) => setForm({ ...form, category: val })}
+                        options={categories}
+                        placeholder="Select Category"
+                    />
 
-                    {/* Trending toggle */}
                     <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
                         <div>
                             <p className="text-sm text-white font-medium">Mark as Trending 🔥</p>
@@ -123,7 +107,6 @@ function EditModal({ image, onClose, onSave }) {
 
                     {error && <p className="text-red-400 text-sm">{error}</p>}
 
-                    {/* Buttons */}
                     <div className="flex gap-3 mt-2">
                         <button
                             onClick={onClose}
@@ -150,10 +133,8 @@ function DeleteModal({ image, onClose, onDelete }) {
 
     const handleDelete = async () => {
         setLoading(true)
-        // Delete from storage
         const fileName = image.image_url.split('/').pop()
         await supabase.storage.from('images').remove([fileName])
-        // Delete from DB
         await supabase.from('images').delete().eq('id', image.id)
         onDelete(image.id)
         onClose()
@@ -198,7 +179,6 @@ function DeleteModal({ image, onClose, onDelete }) {
 function AdminImageCard({ image, onEdit, onDelete }) {
     return (
         <div className="group relative bg-[#0f0f0f] rounded-2xl overflow-hidden border border-white/5 hover:border-white/15 transition-all duration-300">
-            {/* Image */}
             <div className="relative overflow-hidden">
                 <img
                     src={image.image_url}
@@ -207,7 +187,6 @@ function AdminImageCard({ image, onEdit, onDelete }) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-                {/* Badges */}
                 <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
                     <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-sm text-white/80 border border-white/10 uppercase tracking-wider">
                         {image.ai_tool}
@@ -219,12 +198,10 @@ function AdminImageCard({ image, onEdit, onDelete }) {
                     )}
                 </div>
 
-                {/* Copy count */}
                 <div className="absolute bottom-3 left-3 text-xs text-white/50 font-medium">
                     {image.copy_count} copies
                 </div>
 
-                {/* Action buttons — show on hover */}
                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
                         onClick={() => onEdit(image)}
@@ -250,7 +227,6 @@ function AdminImageCard({ image, onEdit, onDelete }) {
                 </div>
             </div>
 
-            {/* Bottom info */}
             <div className="p-4">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] text-indigo-400 font-medium uppercase tracking-widest">{image.category}</span>
@@ -258,7 +234,6 @@ function AdminImageCard({ image, onEdit, onDelete }) {
                 </div>
                 <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">{image.prompt}</p>
 
-                {/* Action row always visible on mobile */}
                 <div className="flex gap-2 mt-4 sm:hidden">
                     <button
                         onClick={() => onEdit(image)}
@@ -280,6 +255,7 @@ function AdminImageCard({ image, onEdit, onDelete }) {
 
 export default function AdminGallery() {
     const navigate = useNavigate()
+    const { aiTools } = useOptions()
     const [images, setImages] = useState([])
     const [loading, setLoading] = useState(true)
     const [editImage, setEditImage] = useState(null)
@@ -307,7 +283,11 @@ export default function AdminGallery() {
         setImages(prev => prev.filter(img => img.id !== id))
     }
 
-    // Filter images
+    const handleLogout = () => {
+        localStorage.removeItem('admin_auth')
+        navigate('/admin')
+    }
+
     const filtered = images.filter(img => {
         const matchSearch = search === '' || img.prompt.toLowerCase().includes(search.toLowerCase())
         const matchTool = filterTool === 'All' || img.ai_tool === filterTool
@@ -315,49 +295,43 @@ export default function AdminGallery() {
         return matchSearch && matchTool && matchTrending
     })
 
-    const handleLogout = () => {
-        localStorage.removeItem('admin_auth')
-        navigate('/admin')
-    }
-
     const trendingCount = images.filter(i => i.is_trending).length
 
     return (
         <div className="min-h-screen bg-[#080808] text-white">
 
-            {/* Header */}
             <div className="sticky top-0 z-40 bg-[#080808]/90 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
                     <div className="flex items-center justify-between gap-4">
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-red-600/20 border border-white/10 hover:border-red-500/30 rounded-xl text-sm font-semibold text-white/50 hover:text-red-400 transition-all"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                            <span className="hidden sm:inline">Logout</span>
-                        </button>
                         <div>
                             <h1 className="text-xl font-bold text-white">Admin Gallery</h1>
                             <p className="text-xs text-white/30 mt-0.5">{images.length} total images · {trendingCount} trending</p>
                         </div>
-                        <button
-                            onClick={() => navigate('/admin/upload')}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-semibold text-white transition-colors shadow-lg shadow-indigo-500/20"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                            <span className="hidden sm:inline">Upload New</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => navigate('/admin/upload')}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-semibold text-white transition-colors shadow-lg shadow-indigo-500/20"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                <span className="hidden sm:inline">Upload New</span>
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-red-600/20 border border-white/10 hover:border-red-500/30 rounded-xl text-sm font-semibold text-white/50 hover:text-red-400 transition-all"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
+                                </svg>
+                                <span className="hidden sm:inline">Logout</span>
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Filters */}
                     <div className="flex flex-wrap items-center gap-3 mt-4">
-                        {/* Search */}
                         <div className="relative flex-1 min-w-[200px] max-w-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -371,21 +345,21 @@ export default function AdminGallery() {
                             />
                         </div>
 
-                        {/* Tool filter */}
                         <select
                             value={filterTool}
                             onChange={e => setFilterTool(e.target.value)}
                             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/50 transition-all"
                         >
                             <option value="All" className="bg-[#111]">All Tools</option>
-                            {AI_TOOLS.map(t => <option key={t} value={t} className="bg-[#111]">{t}</option>)}
+                            {aiTools.map(t => (
+                                <option key={t} value={t} className="bg-[#111]">{t}</option>
+                            ))}
                         </select>
 
-                        {/* Trending filter */}
                         <button
                             onClick={() => setFilterTrending(!filterTrending)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border transition-all
-                ${filterTrending
+                                ${filterTrending
                                     ? 'bg-orange-500/20 border-orange-500/40 text-orange-400'
                                     : 'bg-white/5 border-white/10 text-white/40 hover:text-white/70'
                                 }`}
@@ -396,17 +370,14 @@ export default function AdminGallery() {
                 </div>
             </div>
 
-            {/* Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-                {/* Results count */}
                 {!loading && (
                     <p className="text-xs text-white/25 mb-6">
                         Showing {filtered.length} of {images.length} images
                     </p>
                 )}
 
-                {/* Loading */}
                 {loading && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {[...Array(8)].map((_, i) => (
@@ -421,7 +392,6 @@ export default function AdminGallery() {
                     </div>
                 )}
 
-                {/* Empty */}
                 {!loading && filtered.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-32 text-center">
                         <div className="text-5xl mb-4">📭</div>
@@ -440,7 +410,6 @@ export default function AdminGallery() {
                     </div>
                 )}
 
-                {/* Grid */}
                 {!loading && filtered.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {filtered.map(image => (
@@ -455,7 +424,6 @@ export default function AdminGallery() {
                 )}
             </div>
 
-            {/* Modals */}
             {editImage && (
                 <EditModal
                     image={editImage}
